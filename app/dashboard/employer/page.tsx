@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { statisticsApi } from "@/lib/api";
-import type { EmployerDashboardDto } from "@/lib/types";
+import { statisticsApi, companyApi } from "@/lib/api";
+import type { EmployerDashboardDto, CompanyDto } from "@/lib/types";
 import { useAuth } from "@/context/AuthContext";
 import StatCard from "@/components/ui/StatCard";
 import Badge from "@/components/ui/Badge";
@@ -12,27 +12,59 @@ import ErrorMessage from "@/components/ui/ErrorMessage";
 
 export default function EmployerDashboardPage() {
   const { user } = useAuth();
-  const [data, setData]   = useState<EmployerDashboardDto | null>(null);
+  const [data, setData]       = useState<EmployerDashboardDto | null>(null);
+  const [company, setCompany] = useState<CompanyDto | null | "loading">("loading");
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError]     = useState("");
 
   useEffect(() => {
-    statisticsApi.employerDashboard()
-      .then(setData)
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
+    // Load company profile and dashboard stats in parallel
+    Promise.allSettled([
+      companyApi.getMine(),
+      statisticsApi.employerDashboard(),
+    ]).then(([companyRes, statsRes]) => {
+      setCompany(companyRes.status === "fulfilled" ? companyRes.value : null);
+      if (statsRes.status === "fulfilled") setData(statsRes.value);
+      else if (statsRes.reason?.message && companyRes.status === "fulfilled")
+        setError(statsRes.reason.message);
+    }).finally(() => setLoading(false));
   }, []);
 
   if (loading) return <LoadingSpinner />;
+
+  // No company yet — show setup prompt instead of the full dashboard
+  if (company === null) {
+    return (
+      <div className="max-w-lg mx-auto mt-20 text-center">
+        <div className="text-5xl mb-4">🏢</div>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Set up your Company Profile</h1>
+        <p className="text-gray-500 mb-6">
+          Before you can post jobs, you need to create your company profile.
+          It only takes a minute.
+        </p>
+        <Link href="/dashboard/employer/company"
+          className="inline-block px-6 py-3 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors">
+          Create Company Profile →
+        </Link>
+      </div>
+    );
+  }
+
   if (error)   return <ErrorMessage message={error} />;
   if (!data)   return null;
 
   return (
     <div>
+      {/* Company badge */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Employer Dashboard</h1>
-          <p className="text-gray-500 text-sm mt-1">Welcome back, {user?.fullName}</p>
+          <p className="text-gray-500 text-sm mt-1">
+            Welcome back, {user?.fullName} ·{" "}
+            <Link href="/dashboard/employer/company" className="text-blue-600 hover:underline">
+              {company !== "loading" ? company.name : ""}
+            </Link>
+          </p>
         </div>
         <Link href="/dashboard/employer/post-job"
           className="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors">

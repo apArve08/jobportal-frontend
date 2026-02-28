@@ -18,7 +18,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
         {/* Logo */}
         <Link href="/" className="text-xl font-bold text-blue-600">
-          JobPortal
+          HireFlow
         </Link>
 
         {/* Nav links */}
@@ -28,7 +28,9 @@ export default function Navbar() {
           {isEmployer && (
             <>
               <Link href="/dashboard/employer" className="hover:text-blue-600 transition-colors">Dashboard</Link>
+              <Link href="/dashboard/employer/jobs" className="hover:text-blue-600 transition-colors">My Jobs</Link>
               <Link href="/dashboard/employer/post-job" className="hover:text-blue-600 transition-colors">Post a Job</Link>
+              <Link href="/dashboard/employer/company" className="hover:text-blue-600 transition-colors">Company</Link>
             </>
           )}
 
@@ -37,6 +39,7 @@ export default function Navbar() {
               <Link href="/dashboard/seeker" className="hover:text-blue-600 transition-colors">Dashboard</Link>
               <Link href="/dashboard/seeker/applications" className="hover:text-blue-600 transition-colors">My Applications</Link>
               <Link href="/dashboard/seeker/saved-jobs" className="hover:text-blue-600 transition-colors">Saved Jobs</Link>
+              <Link href="/dashboard/seeker/profile" className="hover:text-blue-600 transition-colors">My Profile</Link>
             </>
           )}
         </div>

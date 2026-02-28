@@ -13,9 +13,12 @@ import type {
   JobDto, JobListItemDto, JobFilterParams, CreateJobDto, UpdateJobDto,
   ApplicationDto, CreateApplicationDto, UpdateApplicationStatusDto,
   SavedJobDto, EmployerDashboardDto, JobSeekerDashboardDto,
+  ProfileDto, UpsertProfileDto,
 } from "./types";
 
-export const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:5177/api";
+// In dev: calls go through Next.js proxy (/api/proxy → localhost:5177/api)
+// In prod: set NEXT_PUBLIC_API_URL to your deployed API domain
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "/api/proxy";
 
 const api = axios.create({ baseURL: API_BASE });
 
@@ -32,23 +35,54 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Redirect to login on 401 anywhere in the app
-    if (error.response?.status === 401 && typeof window !== "undefined") {
+    // Redirect to login on 401, but NOT when already on an auth page.
+    // On /login or /register a 401 means "wrong credentials" — it should
+    // surface as an error message, not trigger a page-reload redirect loop.
+    const onAuthPage =
+      typeof window !== "undefined" &&
+      (window.location.pathname.startsWith("/login") ||
+        window.location.pathname.startsWith("/register"));
+
+    if (error.response?.status === 401 && typeof window !== "undefined" && !onAuthPage) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
+      document.cookie = "token=; path=/; max-age=0";
       window.location.href = "/login";
     }
-    // Surface the backend's message if available
+
+    // FluentValidation 400 errors come back as { errors: { field: ["msg"] } }
+    // Surface all validation messages as a single string
+    const responseData = error.response?.data;
+    if (error.response?.status === 400 && responseData?.errors) {
+      const errs = responseData.errors;
+      if (Array.isArray(errs)) {
+        return Promise.reject(new Error(errs.join(" ")));
+      }
+      // ASP.NET model-binding error format: { "field": ["msg"] }
+      if (typeof errs === "object") {
+        const msgs = Object.values(errs).flat().join(" ");
+        return Promise.reject(new Error(msgs));
+      }
+    }
+
     const message =
-      error.response?.data?.message ?? error.message ?? "An error occurred";
+      responseData?.message ??
+      error.message ??
+      "Network error — is the backend running on port 5177?";
     return Promise.reject(new Error(message));
   }
 );
 
 // ── Helper: unwrap ApiResponse<T> ────────────────────────────────────────────
+// Backend sends "data": null for void responses — use == null (covers both null and undefined)
 function unwrap<T>(response: { data: ApiResponse<T> }): T {
-  if (!response.data.success || response.data.data === undefined) {
+  if (!response.data.success) {
     throw new Error(response.data.message || "Request failed");
+  }
+  if (response.data.data == null) {
+    // For typed responses, null data with success:true means the resource wasn't found
+    // For void operations (DELETE) callers don't use unwrap, so this is always an error
+    throw new Error(response.data.message || "No data returned");
   }
   return response.data.data;
 }
@@ -162,4 +196,36 @@ export const statisticsApi = {
     api
       .get<ApiResponse<JobSeekerDashboardDto>>("/statistics/seeker/dashboard")
       .then(unwrap),
+};
+
+// ═════════════════════════════════════════════════════════════════════════════
+// PROFILE (JobSeeker live résumé)
+// ═════════════════════════════════════════════════════════════════════════════
+export const profileApi = {
+  getMine: () =>
+    api.get<ApiResponse<ProfileDto>>("/profile").then(unwrap),
+
+  upsert: (data: UpsertProfileDto) =>
+    api.put<ApiResponse<ProfileDto>>("/profile", data).then(unwrap),
+
+  getByUserId: (userId: number) =>
+    api.get<ApiResponse<ProfileDto>>(`/profile/${userId}`).then(unwrap),
+};
+
+// ═════════════════════════════════════════════════════════════════════════════
+// UPLOADS (résumé files)
+// ═════════════════════════════════════════════════════════════════════════════
+export const uploadApi = {
+  /** Upload a résumé file — returns the stored filename. */
+  resume: (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return api
+      .post<ApiResponse<{ fileName: string }>>("/uploads/resume", formData)
+      .then(unwrap);
+  },
+
+  /** Construct the URL for viewing/downloading a stored résumé. */
+  resumeUrl: (fileName: string) =>
+    `${API_BASE}/uploads/resume/${encodeURIComponent(fileName)}`,
 };

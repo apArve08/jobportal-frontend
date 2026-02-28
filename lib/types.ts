@@ -116,6 +116,7 @@ export interface JobFilterParams {
   location?: string;
   minSalary?: number;
   maxSalary?: number;
+  companyId?: number;
   page?: number;
   pageSize?: number;
   sortBy?: string;
@@ -241,6 +242,39 @@ export interface JobSeekerDashboardDto {
   offers: number;
   applicationsByStatus: StatusCountDto[];
   recentApplications: RecentApplicationDto[];
+}
+
+// ── Profile (JobSeeker live résumé) ───────────────────────────────────────────
+export interface ProfileDto {
+  userId: number;
+  fullName: string;
+  email: string;
+  profilePictureUrl?: string;
+  phoneNumber?: string;
+  headline?: string;
+  summary?: string;
+  location?: string;
+  skills?: string;
+  yearsOfExperience?: number;
+  linkedInUrl?: string;
+  gitHubUrl?: string;
+  portfolioUrl?: string;
+  hasResume: boolean;
+  resumeFileName?: string;
+  updatedAt?: string;
+}
+
+export interface UpsertProfileDto {
+  headline?: string;
+  summary?: string;
+  location?: string;
+  skills?: string;
+  yearsOfExperience?: number;
+  linkedInUrl?: string;
+  gitHubUrl?: string;
+  portfolioUrl?: string;
+  phoneNumber?: string;
+  resumeFileName?: string;
 }
 
 // ── Shared ────────────────────────────────────────────────────────────────────

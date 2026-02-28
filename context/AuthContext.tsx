@@ -59,6 +59,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    // Clear the cookie that Next.js middleware reads for route guards.
+    // Without this, the middleware still sees the old token after logout
+    // and redirects /login → /dashboard → /login in an infinite loop.
+    document.cookie = "token=; path=/; max-age=0";
     setToken(null);
     setUser(null);
   }, []);

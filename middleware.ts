@@ -14,7 +14,8 @@ import type { NextRequest } from "next/server";
 
 const PROTECTED_SEEKER   = ["/dashboard/seeker"];
 const PROTECTED_EMPLOYER = ["/dashboard/employer"];
-const PROTECTED_ANY      = ["/dashboard"];
+// /seekers/* is readable by any authenticated user (employers view applicant profiles)
+const PROTECTED_ANY      = ["/dashboard", "/seekers"];
 
 interface JwtPayload {
   role?: string;
@@ -69,5 +70,6 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/login", "/register"],
+  // /seekers/[id] requires auth (employers view applicant profiles)
+  matcher: ["/dashboard/:path*", "/seekers/:path*", "/login", "/register"],
 };
