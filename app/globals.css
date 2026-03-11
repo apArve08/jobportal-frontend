@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Class-based dark mode — dark: utilities activate when .dark is on <html>.
+   @custom-variant overrides Tailwind v4's default media-query dark variant. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #f9fafb;
   --foreground: #111827;
@@ -8,4 +12,69 @@
 body {
   background: var(--background);
   color: var(--foreground);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
+
+/* ── Dark mode global overrides ─────────────────────────────────────────────
+   These apply when .dark is on <html>, covering all existing pages without
+   needing to add dark: prefixes to every individual component.
+   ────────────────────────────────────────────────────────────────────────── */
+
+html.dark {
+  color-scheme: dark;
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+}
+
+/* ── Backgrounds ── */
+html.dark .bg-white        { background-color: #1e293b !important; }
+html.dark .bg-gray-50      { background-color: #0f172a !important; }
+html.dark .bg-gray-100     { background-color: #334155 !important; }
+html.dark .bg-blue-50      { background-color: #0c2340 !important; }
+html.dark .bg-blue-100     { background-color: #1e3a5f !important; }
+html.dark .bg-purple-100   { background-color: #3b0764 !important; }
+html.dark .bg-green-50     { background-color: #052e16 !important; }
+html.dark .bg-red-50       { background-color: #450a0a !important; }
+html.dark .bg-yellow-50    { background-color: #422006 !important; }
+
+/* ── Text ── */
+html.dark .text-gray-900   { color: #f1f5f9 !important; }
+html.dark .text-gray-800   { color: #e2e8f0 !important; }
+html.dark .text-gray-700   { color: #cbd5e1 !important; }
+html.dark .text-gray-600   { color: #94a3b8 !important; }
+html.dark .text-gray-500   { color: #64748b !important; }
+html.dark .text-gray-400   { color: #475569 !important; }
+
+/* Coloured text — lighten for legibility on dark backgrounds */
+html.dark .text-blue-600   { color: #60a5fa !important; }
+html.dark .text-blue-700   { color: #93c5fd !important; }
+html.dark .text-green-700  { color: #86efac !important; }
+html.dark .text-red-700    { color: #fca5a5 !important; }
+html.dark .text-purple-600 { color: #c084fc !important; }
+
+/* ── Borders ── */
+html.dark .border-gray-200  { border-color: #334155 !important; }
+html.dark .border-gray-300  { border-color: #475569 !important; }
+html.dark .border-blue-200  { border-color: #1d4ed8 !important; }
+html.dark .border-blue-300  { border-color: #2563eb !important; }
+html.dark .border-green-200 { border-color: #166534 !important; }
+html.dark .border-red-200   { border-color: #991b1b !important; }
+
+/* ── Form controls ── */
+html.dark input:not([type="radio"]):not([type="checkbox"]),
+html.dark textarea,
+html.dark select {
+  background-color: #1e293b !important;
+  border-color:     #475569 !important;
+  color:            #f1f5f9 !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #64748b !important;
+}
+
+/* ── Hover state adjustments ── */
+html.dark .hover\:bg-gray-50:hover  { background-color: #334155 !important; }
+html.dark .hover\:bg-gray-100:hover { background-color: #334155 !important; }
+html.dark .hover\:bg-gray-200:hover { background-color: #475569 !important; }

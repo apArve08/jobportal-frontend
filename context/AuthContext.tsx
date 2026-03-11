@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(user));
     // Write cookie so Next.js middleware (Edge runtime) can read role for route guards
-    document.cookie = `token=${token}; path=/; max-age=3600; SameSite=Lax`;
+    document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
     setToken(token);
     setUser(user);
   };
